@@ -22,12 +22,14 @@ int potPos; // tracks the potentiometer value
 int motorPos; // debug; can be used to track a motor value across program
 int armPos;
 int wristPos;
+int forearmPos;
 
 char rgb[] = "rgbypcwo"; // color array for servo LEDs (identification)
 
 int armID = 1; // unique IDs for individual servo motors allows for simultaneous function in separate tasks 
 int baseID = 2;
-int wristID = 3;
+int elbowID = 4;
+int forearmID = 3;
 
 int timeMillis = 0; // debug; timeMillis does not pause the program while running (unlike the delay command)
 
@@ -44,7 +46,8 @@ void setup() {
   
   arm.setJointSpeed(armID, 256); // set arm joint speed
   arm.setJointSpeed(baseID, 256); // set base joint speed; slower = more torque?
-  arm.setJointSpeed(wristID, 256);
+  arm.setJointSpeed(forearmID, 256);
+  arm.setJointSpeed(elbowID, 256);
 }
 
 // control --------------------------------------------------------------------------------------------------------------------
@@ -53,14 +56,15 @@ void loop() {
   
   arm.LED(baseID, &rgb[2]); // base servo motor = blue
   arm.LED(armID,  &rgb[1]); // arm servo motor(s) = green
-  arm.LED(wristID,  &rgb[4]); // arm servo motor(s) = green
+  arm.LED(elbowID,  &rgb[4]); // rotating servo motor(s) = purple
+  arm.LED(forearmID, &rgb[3]); // forearm servo motor = yellow
 
   potPos = analogRead(pot); // values from 0 to 1023; used to control the orientation of the arm
   
   flexPos = analogRead(flex); // values from approximately 700 to 900; used to control the flex of the arm; must be transformed to be useable on the arm
   flexPos = constrain(flexPos, 700, 900); // control for extraneous readings (x < 700 or x > 900)
   armPos = map(flexPos, 700, 900, 180, 520); // map readings to servo positions s.t. the full range of the flex sensor controls the full range of the servo
-  wristPos = map(flexPos, 700, 900, 520, 180); // map readings to servo positions s.t. the full range of the flex sensor controls the full range of the servo
+  forearmPos = map(flexPos, 700, 900, 520, 180); // map readings to servo positions s.t. the full range of the flex sensor controls the full range of the servo
   
   if (timeMillis % 500 == 0) { // debug; prevents debug stream from being flooded and unreadable
     Serial.print("flex position: "); // return flex value
@@ -73,5 +77,6 @@ void loop() {
   
   arm.moveJoint(baseID, potPos); // set base joint position to pot position
   arm.moveJoint(armID, armPos); // set arm joint position to flex position
-  arm.moveJoint(wristID, wristPos); // set arm joint position to flex position  
+  arm.moveJoint(forearmID, armPos); // set arm joint position to flex position  
+  arm.moveJoint(elbowID, 512);
 }
